@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Expecto Patronum!</title>
+    <meta name="description" content="Web AR game • A-Frame">
+    <script src="aframe.js"></script>
+    <script src="resources/js/argon.min.js"></script>
+    <script src="build.js"></script>
+    <script src="resources/js/CSS3DArgonRenderer.js"></script>
+    <script src="resources/js/CSS3DArgonHUD.js"></script>
+    <script src="resources/js/aframe-look-at-component.js"></script>
+    <script src="https://rawgit.com/ngokevin/aframe-animation-component/master/dist/aframe-animation-component.js"></script>
+    <script src="https://rawgit.com/ngokevin/aframe-physics-components/master/dist/aframe-physics-components.js"></script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/alexgibson/shake.js/master/shake.js"></script>
+    <style>
+      #score {
+        position: absolute;
+        z-index: 2;
+        right: 5%;
+        top: 2%;
+        color: white;
+        text-align: center;
+        font-size: 30px;
+      }
+
+      #gameover {
+        position: absolute;
+        z-index: 0;
+        left: 25%;
+        top: 50%;
+        color: black;
+        text-align: center;
+        font-size: 36px;
+      }
+
+      a-scene {
+        position: absolute;
+        z-index: 1;
+      }
+
+      .noselect {
+          -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Chrome/Safari/Opera */
+             -khtml-user-select: none; /* Konqueror */
+               -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer/Edge */
+                    user-select: none; /* Non-prefixed version, currently
+                                          not supported by any browser */
+        }
+    </style>
+    <script>
+    //Shaking event
+    var shake = false;
+    var shakeEvent = new Shake({threshold: 4, timeout: 0});
+    shakeEvent.start();
+    window.addEventListener('shake', function(){
+      shake = true;
+    }, false);
+
+    AFRAME.registerComponent('cursor-listener', {
+      init: function() {
+        //If user hold the screen and shake then fire!
+        this.el.addEventListener('mouseenter', function () {
+          if(shake) {
+            // // apply force
+            // var impulse = { x: 0, y: 0, z: -4 };
+            // var point = { x: 0, y: 0, z: 0 };
+            // this.el.components['physics-body'].applyImpulse(impulse, point);
+            console.log('PUSH!');
+            animate(this.el);
+            shake = false;
+          }
+          // For Testing on Computer
+          // animate(this.el);
+        }.bind(this));
+      }
+    });
+
+    //Assets
+    var expecto = new Audio('assets/expecto.mp3');
+
+    var animate = function(e) {
+      expecto.play();
+
+      document.getElementById("patronus").emit("shine");
+
+      e.emit('stop');
+      var x = e.getAttribute("position").x;
+      var y = e.getAttribute("position").y;
+      var z = e.getAttribute("position").z;
+      e.children[1].setAttribute("from", x+" "+y+" "+z);
+      console.log(e);
+      e.emit('push');
+      e.emit('come');
+      // e.emit('fade');
+    };
+
+    </script>
+  </head>
+  <body>
+
+    <div id="score" class="noselect" tabindex="-1">0</div>
+    <div id="gameover" class="noselect" tabindex="-1"></div>
+
+    <!-- SCENE -->
+    <ar-scene>
+    <!-- <a-scene physics-world="gravity: 0 -9.8 0"> -->
+
+      <!-- Loading assets -->
+      <a-assets>
+        <a-asset-item id="dementor-obj" src="assets/Dementor.obj"></a-asset-item>
+        <a-asset-item id="dementor-mtl" src="assets/Dementor.mtl"></a-asset-item>
+        <a-asset-item id="wand-obj" src="assets/wand.obj"></a-asset-item>
+        <a-asset-item id="wand-mtl" src="assets/wand.mtl"></a-asset-item>
+        <img id="spell" src="assets/spell.png">
+        <img id="forest" src="assets/forest.jpg">
+      </a-assets>
+
+      <!-- Camera and cursor -->
+      <ar-camera>
+        <a-obj-model src="#wand-obj" mtl="#wand-mtl" position="0 -8 -10" rotation="-60 0 0" scale="0.4 0.4 0.4"></a-obj-model>
+        <!-- <a-obj-model src="#wand-obj" mtl="#wand-mtl" position="3 -8 -10" rotation="-60 12 0" scale="0.4 0.4 0.4"></a-obj-model> -->
+        <a-entity id="patronus" position="0 0 -30" scale="0 0 0">
+          <a-image src="#spell"></a-image>
+          <a-animation attribute="scale" begin="shine" to="60 60 60" dur="600"
+                      easing="ease-in-out" fill="forwards"></a-animation>
+          <a-animation attribute="scale" begin="shine" from="60 60 60" to="0 0 0" dur="600" delay="600"
+                      easing="ease-in-out" fill="forwards"></a-animation>
+          <!-- <a-animation attribute="rotation" begin="shine" from="0 0 0" to="0 0 -2160" dur="2000"
+                      easing="linear" fill="forwards"></a-animation> -->
+        </a-entity>
+        <a-cursor></a-cursor>
+      </ar-camera>
+
+      <!-- Background -->
+      <!-- <a-sky color="#000000"></a-sky> -->
+
+      <!-- TODO: adding circulating dementors as background-->
+      <!-- TODO: Problem: only push when very close, not sure why -->
+      <!-- Dementors -->
+      <!-- 1 -->
+      <a-entity class="dementor" position="-100 60 -400" sound="src: url(assets/1.mp3); autoplay: true; volume: 100 loop: true" cursor-listener>
+        <!-- moving -->
+        <a-animation attribute="position" begin="come" end="stop" to="0 -40 0" dur="10000" delay="1000"
+                    easing="ease-in" fill="forwards"></a-animation>
+        <!-- after push -->
+        <a-animation attribute="position" begin="push" to="-100 60 -400" dur="1000"
+                    easing="ease-out" fill="forwards"></a-animation>
+        <!-- <a-animation attribute="visible" begin="fade" to="false" delay="1000"
+                    easing="ease-out" fill="forwards"></a-animation> -->
+        <a-obj-model src="#dementor-obj" mtl="#dementor-mtl" scale="0.5 0.5 0.5" rotation="-44 195 0"></a-obj-model>
+      </a-entity>
+      <!-- 2 -->
+      <a-entity class="dementor" position="500 -40 -400" sound="src: url(assets/2.mp3); autoplay: true; volume: 100 loop: true" cursor-listener>
+        <!-- moving -->
+        <a-animation attribute="position" begin="come" end="stop" to="0 -40 0" dur="16000" delay="6000"
+                    easing="ease-in" fill="forwards"></a-animation>
+        <!-- after push -->
+        <a-animation attribute="position" begin="push" to="500 -40 -400" dur="1000"
+                    easing="ease-out" fill="forwards"></a-animation>
+        <!-- <a-animation attribute="visible" begin="fade" to="false" delay="1000"
+                    easing="ease-out" fill="forwards"></a-animation> -->
+        <a-obj-model src="#dementor-obj" mtl="#dementor-mtl" scale="0.5 0.5 0.5" rotation="-30 127 0"></a-obj-model>
+      </a-entity>
+      <!-- 3 -->
+      <a-entity class="dementor" position="300 160 400" sound="src: url(assets/3.mp3); autoplay: true; volume: 100 loop: true" cursor-listener>
+        <!-- moving -->
+        <a-animation attribute="position" begin="come" end="stop" to="0 -40 0" dur="12000" delay="3000"
+                    easing="ease-in" fill="forwards"></a-animation>
+        <!-- after push -->
+        <a-animation attribute="position" begin="push" to="300 160 400" dur="1000"
+                    easing="ease-out" fill="forwards"></a-animation>
+        <!-- <a-animation attribute="visible" begin="fade" to="false" delay="1000"
+                    easing="ease-out" fill="forwards"></a-animation> -->
+        <a-obj-model src="#dementor-obj" mtl="#dementor-mtl" scale="0.5 0.5 0.5" rotation="-56.5 36 0"></a-obj-model>
+      </a-entity>
+      <!-- 4 -->
+      <a-entity class="dementor" position="-200 110 400" sound="src: url(assets/4.mp3); autoplay: true; volume: 100 loop: true" cursor-listener>
+        <!-- moving -->
+        <a-animation attribute="position" begin="come" end="stop" to="0 -40 0" dur="10000" delay="9000"
+                    easing="ease-in" fill="forwards"></a-animation>
+        <!-- after push -->
+        <a-animation attribute="position" begin="push" to="-200 110 400" dur="1000"
+                    easing="ease-out" fill="forwards"></a-animation>
+        <!-- <a-animation attribute="visible" begin="fade" to="false" delay="1000"
+                    easing="ease-out" fill="forwards"></a-animation> -->
+        <a-obj-model src="#dementor-obj" mtl="#dementor-mtl" scale="0.5 0.5 0.5" rotation="-50.5 -30 0"></a-obj-model>
+      </a-entity>
+      <!-- 5 -->
+      <a-entity class="dementor" position="-400 10 0" sound="src: url(assets/5.mp3); autoplay: true; volume: 100; loop: true" cursor-listener>
+        <!-- moving -->
+        <a-animation attribute="position" begin="come" end="stop" to="0 -40 0" dur="12000" delay="11000"
+                    easing="ease-in" fill="forwards"></a-animation>
+        <!-- after push -->
+        <a-animation attribute="position" begin="push" to="-400 10 0" dur="1000"
+                    easing="ease-out" fill="forwards"></a-animation>
+        <!-- <a-animation attribute="visible" begin="fade" to="false" delay="1000"
+                    easing="ease-out" fill="forwards"></a-animation> -->
+        <a-obj-model src="#dementor-obj" mtl="#dementor-mtl" scale="0.5 0.5 0.5" rotation="-38 -90 0"></a-obj-model>
+      </a-entity>
+
+    </ar-scene>
+
+    <script>
+      // INITIALIZE SCENE
+      var scene = document.querySelector('ar-scene');
+      var dementors = document.getElementsByClassName("dementor");
+      var lost = false;
+      var x=0;
+
+      scene.addEventListener('loaded', function () {
+        //Set up every dementor to come
+        for(var i=0; i<dementors.length; i++) {
+          dementors[i].emit("come");
+        }
+
+        // Start checking for gameover
+        window.setInterval(check, 1000);
+
+        // Start Timer
+        window.setInterval(
+        function () {
+          if(!lost) {
+            x++;
+            document.getElementById("score").innerHTML = x;
+          }
+        }, 1000);
+      });
+
+      var check = function () {
+        for(var i=0; i<dementors.length; i++) {
+          if(dementors[i].getAttribute("position").z==0 && dementors[i].getAttribute("position").x==0) {
+            // Clear dementors
+            console.log("REMOVED");
+            while (scene.hasChildNodes()) {
+                scene.removeChild(scene.lastChild);
+            }
+            lost = true;
+            console.log("LOST");
+            // localStorage.setItem("highScore", x);
+            // localStorage.getItem("highScore");
+            document.getElementById("gameover").innerHTML = "Game Over <br>" + x;
+            clearInterval(check);
+          }
+        }
+      };
+
+    </script>
+  </body>
+</html>
